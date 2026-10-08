@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "ShowcaseAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "ShowcaseAbility_label",
+      "value": "展物"
+    }
+  ]
+}

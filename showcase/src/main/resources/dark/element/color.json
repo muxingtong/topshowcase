@@ -1,0 +1,124 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#000000"
+    },
+    {
+      "name": "c_bg",
+      "value": "#0E1013"
+    },
+    {
+      "name": "c_card",
+      "value": "#1A1E24"
+    },
+    {
+      "name": "c_text",
+      "value": "#ECEEF2"
+    },
+    {
+      "name": "c_text2",
+      "value": "#9AA1AC"
+    },
+    {
+      "name": "c_text2b",
+      "value": "#A8AFBA"
+    },
+    {
+      "name": "c_text3",
+      "value": "#8A9099"
+    },
+    {
+      "name": "c_chip",
+      "value": "#232A33"
+    },
+    {
+      "name": "c_chip_border",
+      "value": "#303842"
+    },
+    {
+      "name": "c_chip_active",
+      "value": "#3B82F6"
+    },
+    {
+      "name": "c_chip_active_text",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "c_searchbg",
+      "value": "#1E242C"
+    },
+    {
+      "name": "c_inputbg",
+      "value": "#1E242C"
+    },
+    {
+      "name": "c_arrow",
+      "value": "#5A616B"
+    },
+    {
+      "name": "c_favbg",
+      "value": "#3A3320"
+    },
+    {
+      "name": "c_favtext",
+      "value": "#E8C56A"
+    },
+    {
+      "name": "c_gold",
+      "value": "#FFD666"
+    },
+    {
+      "name": "c_shadow",
+      "value": "#66000000"
+    },
+    {
+      "name": "c_corridor_glow",
+      "value": "#2EFFD98A"
+    },
+    {
+      "name": "d_pill",
+      "value": "#26FFFFFF"
+    },
+    {
+      "name": "d_danger",
+      "value": "#FF7A7A"
+    },
+    {
+      "name": "d_danger_bg",
+      "value": "#33E5484D"
+    },
+    {
+      "name": "d_gold_bg",
+      "value": "#33FFC53D"
+    },
+    {
+      "name": "c_glow",
+      "value": "#40FFFFFF"
+    },
+    {
+      "name": "nav_bg",
+      "value": "#F01A1E24"
+    },
+    {
+      "name": "nav_border",
+      "value": "#1FFFFFFF"
+    },
+    {
+      "name": "c_bar_blur",
+      "value": "#D90E1013"
+    },
+    {
+      "name": "c_frame",
+      "value": "#22272E"
+    },
+    {
+      "name": "c_axis",
+      "value": "#333A44"
+    },
+    {
+      "name": "c_bg0",
+      "value": "#000E1013"
+    }
+  ]
+}

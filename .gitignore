@@ -1,0 +1,21 @@
+# 依赖与构建产物
+/oh_modules
+**/build
+/.hvigor
+.cxx
+
+# 本地工具配置（各人不同）
+/.clangd
+/.clang-format
+/.clang-tidy
+/.appanalyzer
+/.bitfun
+
+# 本机专属：含 SDK 路径等本地信息，文件头注明不该进版本库
+local.properties
+
+# 测试与系统文件
+**/.test
+.DS_Store
+.idea/
+*.iml

@@ -1,0 +1,38 @@
+{
+  "module": {
+    "name": "showcase",
+    "type": "entry",
+    "description": "$string:module_desc",
+    "mainElement": "ShowcaseAbility",
+    "deviceTypes": [
+      "phone",
+      "tablet",
+      "2in1"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
+    "pages": "$profile:main_pages",
+    "abilities": [
+      {
+        "name": "ShowcaseAbility",
+        "srcEntry": "./ets/showcaseability/ShowcaseAbility.ets",
+        "description": "$string:ShowcaseAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:ShowcaseAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background",
+        "exported": true,
+        "skills": [
+          {
+            "entities": [
+              "entity.system.home"
+            ],
+            "actions": [
+              "ohos.want.action.home"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
