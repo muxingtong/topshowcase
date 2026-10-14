@@ -236,8 +236,9 @@ export struct GalleryViews {
       .height('100%')
       .padding({ left: CORRIDOR_WALL, right: CORRIDOR_WALL })
       .scrollBar(BarState.Off)
-      .onScroll(() => {
+      .onScrollFrameBegin((offset: number, _state: ScrollState): OnScrollFrameBeginHandlerResult => {
         this.syncCorridorFocusAcross();
+        return { offsetRemain: offset };
       })
       .onScrollIndex((first: number, last: number) => {
         this.syncCorridorFocusAcross();
@@ -347,9 +348,10 @@ export struct GalleryViews {
       // 左右不留内边距：卡片的左右位置由 translate 决定
       .padding({ bottom: this.contentPad })
       .scrollBar(BarState.Off)
-      .onScroll(() => {
+      .onScrollFrameBegin((offset: number, _state: ScrollState): OnScrollFrameBeginHandlerResult => {
         // 逐帧刷新焦点，卡片才是「跟着手指连续变化」而不是「跨一行跳一次」
         this.syncCorridorFocus();
+        return { offsetRemain: offset };
       })
       .onScrollIndex((first: number, last: number) => {
         this.syncCorridorFocus();
@@ -785,7 +787,7 @@ export struct GalleryViews {
       })
 
       Text((this.carouselIndex + 1).toString() + ' / ' + this.items.length.toString())
-        .fontSize(12)
+        .fontSize(13)
         .fontColor($r('app.color.c_text3'))
         .padding({ left: 12, right: 12, top: 5, bottom: 5 })
         .backgroundColor($r('app.color.c_chip'))
@@ -938,10 +940,10 @@ export struct GalleryViews {
       }
       .width('100%')
       .aspectRatio(this.mediaRatio(item))
-      .borderRadius(14)
+      .borderRadius(16)
       .clip(true)
       // 阴影半径收小：三张卡片同时在屏，大半径阴影的重绘开销很可观
-      .shadow({ radius: 12, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 6 })
+      .shadow({ radius: 16, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 8 })
 
       // 镜像倒影：与主图等宽的上下镜像，向下渐隐融进页面底色。
       // 始终显示、不做任何显隐切换 —— 显隐（无论 if 还是 opacity）都会在换页时
@@ -952,7 +954,7 @@ export struct GalleryViews {
         }
         .width('100%')
         .height('100%')
-        .borderRadius(14)
+        .borderRadius(16)
         .clip(true)
         .scale({ y: -1 })
 
@@ -1033,7 +1035,7 @@ export struct GalleryViews {
   timelineHeader(title: string) {
     Row() {
       Text(title)
-        .fontSize(12)
+        .fontSize(13)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.c_text2b'))
         .padding({ left: 11, right: 11, top: 4, bottom: 4 })
@@ -1089,9 +1091,9 @@ export struct GalleryViews {
       }
       .width('100%')
       .aspectRatio(1.3)
-      .borderRadius(10)
+      .borderRadius(12)
       .clip(true)
-      .shadow({ radius: 12, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 6 })
+      .shadow({ radius: 16, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 8 })
       .onClick(() => {
         this.onCardTap(index);
       })

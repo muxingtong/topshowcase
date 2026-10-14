@@ -27,7 +27,7 @@ export function mediaFill(item: MediaItem) {
     if (item.type === MediaType.VIDEO) {
       Column() {
         Text('▶')
-          .fontSize(16)
+          .fontSize(17)
           .fontColor('#FFFFFF')
       }
       .width(34)
@@ -52,13 +52,13 @@ export function emptyState(title: string, subtitle: string) {
     }
     .width(88)
     .height(88)
-    .borderRadius(28)
+    .borderRadius(20)
     .backgroundColor($r('app.color.c_chip'))
     .border({ width: 1, color: $r('app.color.c_chip_border') })
     .justifyContent(FlexAlign.Center)
 
     Text(title)
-      .fontSize(16)
+      .fontSize(17)
       .fontWeight(FontWeight.Medium)
       .fontColor($r('app.color.c_text'))
     Text(subtitle)

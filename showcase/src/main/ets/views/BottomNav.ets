@@ -407,7 +407,7 @@ export struct BottomNav {
   layoutMenuContent() {
     Column() {
       Text('排布方式')
-        .fontSize(12)
+        .fontSize(13)
         .fontColor($r('app.color.c_text3'))
         .width('100%')
         .padding({ left: 10, bottom: 6 })
@@ -423,7 +423,7 @@ export struct BottomNav {
         .margin({ top: 5, bottom: 5 })
 
       Text('画廊')
-        .fontSize(12)
+        .fontSize(13)
         .fontColor($r('app.color.c_text3'))
         .width('100%')
         .padding({ left: 10, bottom: 6 })
@@ -444,7 +444,7 @@ export struct BottomNav {
   layoutMenuRow(name: string, mode: number) {
     Row() {
       Text(name)
-        .fontSize(14)
+        .fontSize(13)
         .fontWeight(this.layoutMode === mode ? FontWeight.Medium : FontWeight.Normal)
         .fontColor(this.layoutMode === mode ? $r('app.color.c_chip_active') : $r('app.color.c_text'))
         .layoutWeight(1)
@@ -459,7 +459,7 @@ export struct BottomNav {
     .width('100%')
     .height(38)
     .padding({ left: 10, right: 10 })
-    .borderRadius(9)
+    .borderRadius(8)
     .backgroundColor(this.layoutMode === mode ? $r('app.color.c_chip') : Color.Transparent)
     .onClick(() => {
       // 先收起菜单再切换，避免菜单浮在过渡动画之上

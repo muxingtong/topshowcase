@@ -87,11 +87,11 @@ export struct TopBar {
     Row({ space: 8 }) {
       Column({ space: 3 }) {
         Text('展物')
-          .fontSize(23)
+          .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.c_text'))
         Text(this.itemCount.toString() + ' 件藏品')
-          .fontSize(12)
+          .fontSize(13)
           .fontColor($r('app.color.c_text3'))
       }
       .alignItems(HorizontalAlign.Start)
@@ -197,7 +197,7 @@ export struct TopBar {
     Stack() {
       this.topButtonGlass()
       Text('⋯')
-        .fontSize(18)
+        .fontSize(17)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.c_text2b'))
         .width('100%')
@@ -264,11 +264,11 @@ export struct TopBar {
   activeGroupRow() {
     Row() {
       Text('分组：' + this.groupFilter + '  ✕')
-        .fontSize(12)
+        .fontSize(13)
         .fontColor($r('app.color.c_chip_active_text'))
         .padding({ left: 12, right: 12, top: 6, bottom: 6 })
         .backgroundColor($r('app.color.c_chip_active'))
-        .borderRadius(14)
+        .borderRadius(16)
         .onClick(() => {
           this.onClearGroup();
         })

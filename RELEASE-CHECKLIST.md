@@ -5,24 +5,40 @@
 
 ---
 
+## 更新记录（HarmonyOS 7 / API 26 升级）
+
+- 工程级 `build-profile.json5`：`compatibleSdkVersion` / `targetSdkVersion` 已升级到 `26.0.0`。
+- 工程级 `oh-package.json5` 与 `hvigor/hvigor-config.json5`：`modelVersion` 已升级到 `7.0.0`。
+- 修复废弃 API：`GalleryViews.ets` 中 `List.onScroll` 已替换为 `onScrollFrameBegin`。
+- 签名配置已清空为 `"signingConfig": ""`，当前使用未签名 debug 包在模拟器验证。
+- 大版本迭代：版本号升级到 `2.0.0`（versionCode `2000000`）。
+- 已移除 rawfile 测试种子图与 `READ_IMAGEVIDEO` 权限，回归正式空态。
+- 已在两台 HarmonyOS 7 模拟器验证 UI：
+  - 手机（Pura X View / 1320×2232 竖屏）：网格 3 列正常显示 12 件藏品。
+  - 平板（MatePad Pro 13 / 2880×1920 横屏）：网格自动扩展到 7 列。
+
+> 注：正式上架前请在 DevEco Studio 中生成发布签名并回填 `build-profile.json5`。
+
+---
+
 ## 0. 当前状态体检
 
 ### 🔴 阻塞项（不改就过不了）
 
 | # | 问题 | 现状 | 位置 |
 |---|---|---|---|
-| 1 | **签名是调试证书** | `keyAlias: "debugKey"`，证书由 DevEco 自动生成（`default_TopShowcase...cer`） | [build-profile.json5](../build-profile.json5) |
-| 2 | **vendor 是模板默认值** | `"vendor": "example"` | [app.json5](../AppScope/app.json5) |
+| 1 | **签名已清空** | 当前 `signingConfig` 为空，仅用于模拟器调试；上架必须换成**发布证书 + 发布 Profile** | [build-profile.json5](build-profile.json5) |
+| 2 | **vendor 是模板默认值** | `"vendor": "example"` | [app.json5](AppScope/app.json5) |
 
-上架必须用**发布证书 + 发布 Profile**。调试证书签出的包 AGC 会直接拒收。
+上架必须用**发布证书 + 发布 Profile**。未签名包或调试证书签出的包 AGC 会直接拒收。
 
 ### 🟡 需要确认（可能需要改）
 
 | # | 项 | 现状 | 处理 |
 |---|---|---|---|
-| 3 | **deviceTypes 声明了三种设备** | `phone` / `tablet` / `2in1` | 声明了就必须都适配到位。横屏刚做完但**未实测**，平板/PC 上的布局要真机验证；不打算适配就裁掉对应项 |
-| 4 | versionCode | `1000000` | 合法（正整数）。此后每次提审必须**递增** |
-| 5 | versionName | `"1.0.0"` | 用户可见版本号，可自由填 |
+| 3 | **deviceTypes 声明了三种设备** | `phone` / `tablet` / `2in1` | phone / tablet 已在 HarmonyOS 7 模拟器验证；`2in1` 尚未实测，不打算适配就裁掉 |
+| 4 | versionCode | `2000000` | 大版本迭代已递增 |
+| 5 | versionName | `"2.0.0"` | 用户可见版本号，已随大版本升级 |
 | 6 | 应用名只有中文 | `app_name = 展物` | 只在国内上架可接受；有海外计划需补 `en_US` 等 `string.json` |
 
 ### 🟢 已就绪
@@ -32,9 +48,11 @@
 | 应用图标（分层） | `AppScope/resources/base/media/` 下 background + foreground，均 1024×1024 PNG |
 | 上架直角图标 | `store-icon/app_icon_1024.png` / `app_icon_216.png` |
 | 启动图标 | `startWindowIcon = $media:startIcon`（512×512） |
-| 权限 | **未申请任何敏感权限**——导入导出全走系统选择器（`PhotoViewPicker` / `DocumentViewPicker`），用户主动选择。这是加分项，见第 4 节 |
+| 权限 | **未申请敏感权限**——导入导出全走系统选择器（`PhotoViewPicker` / `DocumentViewPicker`），用户主动选择 |
 | 无障碍/深色模式 | 已有 `base` / `dark` 两套完整配色 |
-| 横竖屏 | 已适配 |
+| 横竖屏 | 已适配，并在手机竖屏 / 平板横屏验证 |
+| API 版本 | 已升级到 HarmonyOS 7（API 26），模拟器验证通过 |
+| 版本号 | 已升级到 `2.0.0`（versionCode `2000000`）|
 
 ---
 

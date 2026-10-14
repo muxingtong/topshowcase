@@ -124,15 +124,21 @@ export const CORRIDOR_LIFT_MAX_D: number = 4;
 // ---------- 内容切换过渡（纯计算，多个视图共用）----------
 // 阶段约定：0 稳定，1 旧内容左右退场，2 新内容自下而上补位
 
-/** 网格列模板 */
+/** 网格列模板。
+ *  按列数动态生成：设置里是 2~4，横屏自动推算最多能到 7 列。
+ *  原先只硬编码 2/3/4，其余一律回退成 3 列 —— effectiveColumns() 在横屏算出的
+ *  5~7 列会被无声吃掉，正是它的注释里说要避免的「屏宽翻倍还用 3 列，每格宽得离谱」。
+ *  列数上限由调用方（settings 的 2/3/4、effectiveColumns() 的 3~7）负责，这里不再钳。 */
 export function gridTemplate(columns: number): string {
-  if (columns === 2) {
-    return '1fr 1fr';
+  let n: number = Math.floor(columns);
+  if (!(n > 0)) {
+    n = 1;
   }
-  if (columns === 4) {
-    return '1fr 1fr 1fr 1fr';
+  let tpl: string = '1fr';
+  for (let i = 1; i < n; i++) {
+    tpl = tpl + ' 1fr';
   }
-  return '1fr 1fr 1fr';
+  return tpl;
 }
 
 /** 是否属于画廊系列排布（决定用哪个视图组件渲染） */

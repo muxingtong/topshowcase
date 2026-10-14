@@ -59,7 +59,6 @@ struct Index {
   // 信息卡片读取的索引：在滑动动画一开始就更新，不必等切换动画播完
   @State detailIndex: number = -1;
   @State importing: boolean = false;
-  @State showcaseIndex: number = 0;
   @State autoPlay: boolean = false;
 
   // 时间轴条目缓存（由 refresh() 重建，交给画廊视图组件渲染）
@@ -208,7 +207,8 @@ struct Index {
     this.slideInterval = settings.slideInterval ? settings.slideInterval : 3;
     this.theme = settings.theme ? settings.theme : 0;
     this.applyTheme();
-    this.allItems = await ShowcaseStore.load(context);
+    const loaded: MediaItem[] = await ShowcaseStore.load(context);
+    this.allItems = loaded;
     // 回填必须赶在首屏之前。它原本是个不 await 的后台任务，跑完再 refresh()，
     // 而那次 refresh 会走 ds.notifyReload() —— LazyForEach 全表重建、Swiper 的
     // 槽位被整体换掉。如果用户这时正在展台里滑，画面内容就会「突然瞬移」。

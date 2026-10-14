@@ -97,7 +97,7 @@ export struct ContentViews {
       if (item.type === MediaType.VIDEO) {
         Stack({ alignContent: Alignment.TopStart }) {
           Text('视频')
-            .fontSize(10)
+            .fontSize(11)
             .fontColor('#FFFFFF')
             .padding({ left: 7, right: 7, top: 3, bottom: 3 })
             .backgroundColor('#E5484D')
@@ -118,7 +118,7 @@ export struct ContentViews {
       } else if (item.favorite) {
         Stack({ alignContent: Alignment.TopEnd }) {
           Text('★')
-            .fontSize(16)
+            .fontSize(17)
             .fontColor($r('app.color.c_gold'))
             .textShadow({ radius: 4, color: '#66000000', offsetX: 0, offsetY: 1 })
             .margin({ right: 8, top: 6 })
@@ -132,7 +132,7 @@ export struct ContentViews {
     .borderRadius(16)
     .clip(true)
     .backgroundColor($r('app.color.c_chip'))
-    .shadow({ radius: 10, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 3 })
+    .shadow({ radius: 16, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 8 })
     .clickEffect({ level: ClickEffectLevel.LIGHT })
     .onClick(() => {
       this.onCardTap(index);
@@ -146,7 +146,7 @@ export struct ContentViews {
   checkCircle(item: MediaItem) {
     Column() {
       Text(this.isSelected(item.id) ? '✓' : '')
-        .fontSize(14)
+        .fontSize(13)
         .fontColor('#FFFFFF')
     }
     .width(22)
@@ -238,7 +238,7 @@ export struct ContentViews {
                     .borderRadius(5)
                 }
                 Text(formatDate(effDate(item)) + ' · ' + formatSize(item.size))
-                  .fontSize(12)
+                  .fontSize(13)
                   .fontColor($r('app.color.c_text2'))
               }
             }
@@ -249,7 +249,7 @@ export struct ContentViews {
               this.checkCircle(item);
             } else {
               Text('›')
-                .fontSize(22)
+                .fontSize(20)
                 .fontColor($r('app.color.c_arrow'))
             }
           }
@@ -322,7 +322,7 @@ export struct ContentViews {
         Row({ space: 10 }) {
         if (this.showcaseIndex >= 0 && this.showcaseIndex < this.items.length) {
           Text(this.items[this.showcaseIndex].displayName)
-            .fontSize(16)
+            .fontSize(17)
             .fontWeight(FontWeight.Medium)
             .fontColor($r('app.color.c_text'))
             .maxLines(1)
@@ -330,11 +330,11 @@ export struct ContentViews {
             .layoutWeight(1)
         }
         Text(this.autoPlay ? '暂停轮播' : '自动轮播')
-          .fontSize(12)
+          .fontSize(13)
           .fontColor(this.autoPlay ? $r('app.color.c_text2b') : $r('app.color.c_chip_active_text'))
           .padding({ left: 12, right: 12, top: 6, bottom: 6 })
           .backgroundColor(this.autoPlay ? $r('app.color.c_chip') : $r('app.color.c_chip_active'))
-          .borderRadius(14)
+          .borderRadius(16)
           .onClick(() => {
             this.autoPlay = !this.autoPlay;
             this.onToggleAutoPlay();

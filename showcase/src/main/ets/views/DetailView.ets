@@ -106,7 +106,7 @@ export struct DetailView {
       Column() {
       Row({ space: 12 }) {
         Text(this.nameDraft)
-          .fontSize(16)
+          .fontSize(17)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.c_text'))
           .maxLines(1)
@@ -118,7 +118,7 @@ export struct DetailView {
           .fontColor($r('app.color.c_text2b'))
           .padding({ left: 14, right: 14, top: 7, bottom: 7 })
           .backgroundColor($r('app.color.d_pill'))
-          .borderRadius(15)
+          .borderRadius(16)
           .onClick(() => {
             this.closeDetail();
           })
@@ -424,10 +424,10 @@ export struct DetailView {
           TextInput({ text: this.nameDraft })
             .layoutWeight(1)
             .height(40)
-            .fontSize(14)
+            .fontSize(13)
             .fontColor($r('app.color.c_text'))
             .backgroundColor($r('app.color.c_inputbg'))
-            .borderRadius(10)
+            .borderRadius(12)
             .onChange((v: string) => {
               this.nameDraft = v;
             })
@@ -455,10 +455,10 @@ export struct DetailView {
         TextArea({ text: this.remarkDraft })
           .width('100%')
           .height(72)
-          .fontSize(14)
+          .fontSize(13)
           .fontColor($r('app.color.c_text'))
           .backgroundColor($r('app.color.c_inputbg'))
-          .borderRadius(10)
+          .borderRadius(12)
           .onChange((v: string) => {
             this.remarkDraft = v;
           })

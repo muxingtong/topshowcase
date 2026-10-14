@@ -85,7 +85,7 @@ export struct Overlays {
 
       Stack({ alignContent: Alignment.TopEnd }) {
         Text('退出展示')
-          .fontSize(14)
+          .fontSize(13)
           .fontColor('#FFFFFF')
           .padding({ left: 14, right: 14, top: 6, bottom: 6 })
           .backgroundColor('#66000000')
@@ -101,7 +101,7 @@ export struct Overlays {
       if (this.slideIndex >= 0 && this.slideIndex < this.items.length) {
         Stack({ alignContent: Alignment.Bottom }) {
           Text(this.items[this.slideIndex].displayName)
-            .fontSize(14)
+            .fontSize(13)
             .fontColor('#FFFFFF')
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -177,9 +177,9 @@ export struct Overlays {
         TextInput({ text: this.groupDraft, placeholder: '输入分组名（留空则移出分组）' })
           .width('100%')
           .height(44)
-          .fontSize(14)
+          .fontSize(13)
           .backgroundColor($r('app.color.c_inputbg'))
-          .borderRadius(10)
+          .borderRadius(12)
           .onChange((v: string) => {
             this.groupDraft = v;
           })
@@ -282,7 +282,7 @@ export struct Overlays {
       .fontColor($r('app.color.c_text2b'))
       .padding({ left: 14, right: 14, top: 8, bottom: 8 })
       .backgroundColor($r('app.color.c_chip'))
-      .borderRadius(18)
+      .borderRadius(16)
       .border({ width: 1, color: $r('app.color.c_chip_border') })
       .onClick(action)
   }

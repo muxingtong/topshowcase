@@ -250,13 +250,13 @@ export struct AlbumViews {
         }
         .padding({ left: 18, right: 18, top: 10, bottom: 10 })
         .backgroundColor('#99000000')
-        .borderRadius(18)
+        .borderRadius(16)
       }
       .width('100%')
       .layoutWeight(1)
       .borderRadius(20)
       .clip(true)
-      .shadow({ radius: 16, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 6 })
+      .shadow({ radius: 16, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 8 })
       .onClick(() => {
         this.onOpenGroup(g.name);
       })
@@ -332,14 +332,14 @@ export struct AlbumViews {
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
               Text(g.count.toString() + ' 件藏品')
-                .fontSize(12)
+                .fontSize(13)
                 .fontColor($r('app.color.c_text3'))
             }
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
 
             Text('›')
-              .fontSize(22)
+              .fontSize(20)
               .fontColor($r('app.color.c_arrow'))
           }
           .width('100%')
@@ -384,7 +384,7 @@ export struct AlbumViews {
       }
       Column({ space: 2 }) {
         Text(g.name)
-          .fontSize(14)
+          .fontSize(13)
           .fontWeight(FontWeight.Medium)
           .fontColor('#FFFFFF')
           .maxLines(1)
@@ -402,7 +402,7 @@ export struct AlbumViews {
     .height('100%')
     .borderRadius(16)
     .clip(true)
-    .shadow({ radius: 10, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 3 })
+    .shadow({ radius: 16, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 8 })
     .onClick(() => {
       this.onOpenGroup(g.name);
     })
