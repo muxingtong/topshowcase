@@ -15,6 +15,14 @@ const STORE_NAME: string = 'top_showcase_store';
 const ITEMS_KEY: string = 'items';
 const SETTINGS_KEY: string = 'settings';
 const DIR_NAME: string = 'showcase';
+/**
+ * 缩略图长边上限。横屏的大格子都靠它兜底：时间轴 1512px、瀑布 ~1560px、展厅墙 ~1040px。
+ * 定 640 时这些格子要放大约 2.4~3.2 倍，肉眼就是糊的。
+ * 文件名带这一档的数字后缀，老库据此按批重出（见 needsThumbUpgrade / upgradeThumbs）。
+ */
+const THUMB_MAX_SIDE: number = 1280;
+/** 缩略图档位后缀（换成别的尺寸时，老图没有这个后缀，自然会被重出） */
+const THUMB_TIER_TAG: string = '_' + THUMB_MAX_SIDE.toString();
 
 /** 一次导入的结果。 */
 export interface ImportOutcome {
@@ -409,14 +417,16 @@ export class ShowcaseStore {
           let height: number = 0;
           let thumbUri: string = '';
           let dateTaken: number = 0;
+          // id 提前算：缩略图文件名要用它（带 id 与档位后缀，便于按批升级与清理）
+          const id: string = ShowcaseStore.buildId(uri, stamp, i);
           if (type === MediaType.IMAGE) {
             const size: ImageSize = await ShowcaseStore.readImageSize(destPath);
             width = size.width;
             height = size.height;
             dateTaken = await ShowcaseStore.readImageDate(destPath);
             if (width > 0 && height > 0) {
-              const thumbPath: string = dir + '/thumb_' + stamp.toString() + '_' + i.toString() + '.jpg';
-              const tOk: boolean = await ShowcaseStore.makeImageThumb(destPath, thumbPath, 640);
+              const thumbPath: string = ShowcaseStore.thumbPath(dir, id);
+              const tOk: boolean = await ShowcaseStore.makeImageThumb(destPath, thumbPath, THUMB_MAX_SIDE);
               if (tOk) {
                 thumbUri = 'file://' + thumbPath;
               }
@@ -424,7 +434,7 @@ export class ShowcaseStore {
             if (width <= 0 || height <= 0) {
               // 解不出图片尺寸，可能是被误判的视频：尝试按视频取帧
               const vmeta: VideoMeta = await ShowcaseStore.readVideoMeta(destPath);
-              const thumbPath: string = dir + '/thumb_' + stamp.toString() + '_' + i.toString() + '.jpg';
+              const thumbPath: string = ShowcaseStore.thumbPath(dir, id);
               const ok: boolean = await ShowcaseStore.extractVideoThumb(destPath, thumbPath, vmeta.width, vmeta.height);
               if (ok) {
                 type = MediaType.VIDEO;
@@ -439,13 +449,12 @@ export class ShowcaseStore {
             width = vmeta.width;
             height = vmeta.height;
             dateTaken = vmeta.dateTaken;
-            const thumbPath: string = dir + '/thumb_' + stamp.toString() + '_' + i.toString() + '.jpg';
+            const thumbPath: string = ShowcaseStore.thumbPath(dir, id);
             const ok: boolean = await ShowcaseStore.extractVideoThumb(destPath, thumbPath, width, height);
             if (ok) {
               thumbUri = 'file://' + thumbPath;
             }
           }
-          const id: string = ShowcaseStore.buildId(uri, stamp, i);
           const displayName: string = ShowcaseStore.originalName(uri);
           const item = new MediaItem(id, type, 'file://' + destPath, fileName, displayName, stat.size, stamp,
             dateTaken, width, height, thumbUri, false, '', '');
@@ -653,8 +662,20 @@ export class ShowcaseStore {
   }
 
   /**
+   * 缩略图落盘路径。文件名里带档位后缀（`thumb_<id>_1280.jpg`）：
+   * 一是换尺寸时不会与老图重名、老库可以按后缀识别出「该重出」，
+   * 二是换了文件路径就等于换了图片缓存的 key，界面不会拿到旧的 640 图。
+   */
+  static thumbPath(dir: string, id: string): string {
+    return dir + '/thumb_' + id + THUMB_TIER_TAG + '.jpg';
+  }
+
+  /**
    * 回填历史数据：老版本导入的藏品没有宽高/视频封面，这里按需补上。
    * 只在有变化时落盘。
+   *
+   * 注意这里**不做**缩略图升档：升档要重编每一张，放在启动路径上会拖住首屏，
+   * 交给 Index 在首屏之后按批跑（见 upgradeThumbs）。
    */
   static async backfill(context: common.UIAbilityContext, items: MediaItem[]): Promise<MediaItem[]> {
     const dir: string = context.filesDir + '/' + DIR_NAME;
@@ -672,7 +693,7 @@ export class ShowcaseStore {
           } else {
             // 之前可能把视频误判成图片，这里纠正
             const vmeta: VideoMeta = await ShowcaseStore.readVideoMeta(raw);
-            const thumbPath: string = dir + '/thumb_' + item.id + '.jpg';
+            const thumbPath: string = ShowcaseStore.thumbPath(dir, item.id);
             const ok: boolean = await ShowcaseStore.extractVideoThumb(raw, thumbPath, vmeta.width, vmeta.height);
             if (ok) {
               item.type = MediaType.VIDEO;
@@ -694,8 +715,8 @@ export class ShowcaseStore {
           }
         }
         if (item.thumbUri.length === 0 && item.width > 0 && item.height > 0) {
-          const thumbPath: string = dir + '/thumb_' + item.id + '.jpg';
-          const ok: boolean = await ShowcaseStore.makeImageThumb(raw, thumbPath, 640);
+          const thumbPath: string = ShowcaseStore.thumbPath(dir, item.id);
+          const ok: boolean = await ShowcaseStore.makeImageThumb(raw, thumbPath, THUMB_MAX_SIDE);
           if (ok) {
             item.thumbUri = 'file://' + thumbPath;
             changed = true;
@@ -727,7 +748,7 @@ export class ShowcaseStore {
           }
         }
         if (needThumb) {
-          const thumbPath: string = dir + '/thumb_' + item.id + '.jpg';
+          const thumbPath: string = ShowcaseStore.thumbPath(dir, item.id);
           const ok: boolean = await ShowcaseStore.extractVideoThumb(raw, thumbPath, item.width, item.height);
           if (ok) {
             item.thumbUri = 'file://' + thumbPath;
@@ -743,6 +764,59 @@ export class ShowcaseStore {
     return items;
   }
 
+  /** 该条的老缩略图是否需要按当前档位重出（老图文件名里没有档位后缀）。 */
+  static needsThumbUpgrade(item: MediaItem): boolean {
+    if (item.thumbUri.length === 0) {
+      return false;
+    }
+    return item.thumbUri.indexOf(THUMB_TIER_TAG) < 0;
+  }
+
+  /**
+   * 按批把老缩略图升到当前档位（640 → 1280），最多处理 limit 条，返回本次改动条数。
+   *
+   * 一张要几十毫秒（解码 + 编码 + 写盘），所以不做成一次性迁移：调用方在首屏之后
+   * 分批调用，中间让出事件循环；返回 limit 说明还有剩，返回小于 limit 说明已经跑完
+   * 或剩下的都失败了。中途退出也没关系 —— 判据是文件名后缀，下次启动接着来。
+   */
+  static async upgradeThumbs(context: common.UIAbilityContext, items: MediaItem[], limit: number): Promise<number> {
+    const dir: string = context.filesDir + '/' + DIR_NAME;
+    const stale: string[] = [];
+    let done: number = 0;
+    for (let i = 0; i < items.length && done < limit; i++) {
+      const item: MediaItem = items[i];
+      if (!ShowcaseStore.needsThumbUpgrade(item)) {
+        continue;
+      }
+      const oldPath: string = ShowcaseStore.rawPath(item.thumbUri);
+      const newPath: string = ShowcaseStore.thumbPath(dir, item.id);
+      let ok: boolean = false;
+      if (item.type === MediaType.VIDEO) {
+        ok = await ShowcaseStore.extractVideoThumb(ShowcaseStore.rawPath(item.uri), newPath, item.width, item.height);
+      } else {
+        ok = await ShowcaseStore.makeImageThumb(ShowcaseStore.rawPath(item.uri), newPath, THUMB_MAX_SIDE);
+      }
+      if (!ok) {
+        // 失败就留着老图不动，下次启动再试
+        continue;
+      }
+      item.thumbUri = 'file://' + newPath;
+      if (oldPath !== newPath) {
+        stale.push(oldPath);
+      }
+      done++;
+    }
+    if (done > 0) {
+      // 先落盘再删老图：万一这中间进程没了，最坏是留下几个孤儿老文件，
+      // 绝不会出现「记录指向已被删掉的图」
+      await ShowcaseStore.persist(context, items);
+      for (let i = 0; i < stale.length; i++) {
+        ShowcaseStore.removeFileQuietly(stale[i]);
+      }
+    }
+    return done;
+  }
+
   /** 提取视频首帧并写入 thumbPath（按视频真实比例，避免封面被压成方形）；成功返回 true。 */
   static async extractVideoThumb(videoPath: string, thumbPath: string, videoW: number, videoH: number): Promise<boolean> {
     let file: fs.File | null = null;
@@ -755,15 +829,16 @@ export class ShowcaseStore {
       generator = await media.createAVImageGenerator();
       const fd: media.AVFileDescriptor = { fd: srcFd };
       generator.fdSrc = fd;
-      let reqW: number = 640;
-      let reqH: number = 640;
+      // 封面与图片缩略图同档：大格子下视频封面同样会被放大，两边尺寸要一致
+      let reqW: number = THUMB_MAX_SIDE;
+      let reqH: number = THUMB_MAX_SIDE;
       if (videoW > 0 && videoH > 0) {
         if (videoW >= videoH) {
-          reqW = 640;
-          reqH = Math.round(640 * videoH / videoW);
+          reqW = THUMB_MAX_SIDE;
+          reqH = Math.round(THUMB_MAX_SIDE * videoH / videoW);
         } else {
-          reqH = 640;
-          reqW = Math.round(640 * videoW / videoH);
+          reqH = THUMB_MAX_SIDE;
+          reqW = Math.round(THUMB_MAX_SIDE * videoW / videoH);
         }
         if (reqW < 1) {
           reqW = 1;
@@ -821,6 +896,15 @@ export class ShowcaseStore {
         fs.unlinkSync(ShowcaseStore.rawPath(item.thumbUri));
       } catch (err) {
       }
+    }
+  }
+
+  /** 删单个文件，失败只记日志（缩略图升档后清老图用）。 */
+  static removeFileQuietly(path: string): void {
+    try {
+      fs.unlinkSync(path);
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, 'unlink failed: %{public}s', JSON.stringify(err));
     }
   }
 

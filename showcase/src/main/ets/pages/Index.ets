@@ -1,5 +1,6 @@
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 import { MediaItem, MediaType } from '../model/MediaItem';
 import { MediaDataSource } from '../model/MediaDataSource';
 import { TimelineEntry } from '../model/TimelineEntry';
@@ -27,6 +28,10 @@ import {
   NAV_COMBO,
   NAV_H,
   NAV_MARGIN,
+  PHASE_EXIT_WAIT_MS,
+  PHASE_SWAP_GAP_MS,
+  PHASE_ENTER_MS,
+  LAYOUT_SWITCH_MS,
   isGalleryLayout,
 } from '../common/Constants';
 
@@ -46,6 +51,12 @@ struct Index {
   @State contentFilter: number = FILTER_ALL;
   // 内容过渡阶段：0 稳定，1 旧内容左右退场，2 新内容自下而上补位
   @State contentPhase: number = 0;
+  // 过渡的忙碌截止时刻（Date.now() 毫秒）。contentPhase 在换完数据 16ms 后就归 0，
+  // 而补位动画还要再播 240ms —— 只看 contentPhase 会把"动画仍在播"当成"已稳定"，
+  // 于是连点时每一拍都重新退场一次，补位永远走不完，看着就是点快了卡住
+  private switchBusyUntil: number = 0;
+  // 排布切换的忙碌截止时刻：连点排布时不再每次重播淡入
+  private layoutBusyUntil: number = 0;
   // 连续快速切换时的令牌，只有最后一次生效
   private switchToken: number = 0;
   // 内容切换编排的定时器句柄：新一次切换先取消上一次，避免定时器堆积
@@ -216,6 +227,33 @@ struct Index {
     // 这里会被逐条快速跳过，所以正常情况下几乎不增加启动时间。
     await this.runBackfill(context);
     this.refresh();
+    this.startThumbUpgrade();
+  }
+
+  // ---------- 老缩略图按批升档（640 → 1280）----------
+  // 放在首屏之后：重编一张要几十毫秒，上千张一次跑完会把启动路径堵死。
+  // 每批之间让出事件循环，跑完即止；中途退出则由文件名后缀判断，下次启动接着来。
+
+  startThumbUpgrade(): void {
+    setTimeout(() => {
+      this.runThumbUpgradeBatch();
+    }, 1200);
+  }
+
+  async runThumbUpgradeBatch(): Promise<void> {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      const batch: number = 4;
+      const done: number = await ShowcaseStore.upgradeThumbs(context, this.allItems, batch);
+      if (done >= batch) {
+        setTimeout(() => {
+          this.runThumbUpgradeBatch();
+        }, 300);
+      }
+    } catch (err) {
+      // 升档是后台优化，出问题不能影响主流程；剩下的批次下次启动继续
+      hilog.warn(0x1001, 'TopShowcase', 'thumb upgrade batch failed: %{public}s', JSON.stringify(err));
+    }
   }
 
   // 主题：跟随系统 / 强制浅色 / 强制深色
@@ -577,22 +615,20 @@ struct Index {
       this.switchTimer2 = -1;
     }
 
-    // 上一次过渡尚未结束：跳过退场，直接换数据并补位，保证连点时的响应速度
-    if (this.contentPhase !== 0) {
-      this.contentPhase = 2;
+    // 上一次过渡还没播完（退场 + 补位整段）：只换数据，不重播退场。
+    // 这时内容本来就在往"稳定"走，直接换数据出来就是最快的反馈；
+    // 再退场一次只会把补位从头开始，连点就会一直卡在半透明状态
+    if (Date.now() < this.switchBusyUntil) {
+      this.contentPhase = 0;
       this.contentFilter = mode;
       this.refresh();
-      this.switchTimer2 = setTimeout(() => {
-        this.switchTimer2 = -1;
-        if (token !== this.switchToken) {
-          return;
-        }
-        this.contentPhase = 0;
-      }, 16);
+      // 连点期间维持忙碌：每一下都走"直接换"，直到用户停下来
+      this.switchBusyUntil = Date.now() + PHASE_ENTER_MS;
       return;
     }
 
-    // 第一拍：旧内容按奇偶分左右退场（120ms 后就让新内容接手，尽量压缩点击到内容的延迟）
+    // 第一拍：旧内容按奇偶分左右退场（PHASE_EXIT_WAIT_MS 后就让新内容接手，尽量压缩点击到内容的延迟）
+    this.switchBusyUntil = Date.now() + PHASE_EXIT_WAIT_MS + PHASE_SWAP_GAP_MS + PHASE_ENTER_MS;
     this.contentPhase = 1;
     this.switchTimer1 = setTimeout(() => {
       this.switchTimer1 = -1;
@@ -610,8 +646,8 @@ struct Index {
         }
         // 第三拍：自下而上补位
         this.contentPhase = 0;
-      }, 16);
-    }, 120);
+      }, PHASE_SWAP_GAP_MS);
+    }, PHASE_EXIT_WAIT_MS);
   }
 
   setGroupFilter(group: string): void {
@@ -1189,9 +1225,17 @@ struct Index {
     if (this.layoutMode === mode) {
       return;
     }
-    this.getUIContext().animateTo({ duration: 280, curve: Curve.EaseInOut }, () => {
+    // 上一次切换的淡入还没播完就再点：直接换，不再套一层动画。
+    // 套着 animateTo 换排布会让新内容重新走一次淡入，连点排布时内容一直在
+    // 淡出/淡入之间来回闪，看着就是卡住；不套动画则是立刻换过来，响应更快
+    if (Date.now() < this.layoutBusyUntil) {
       this.layoutMode = mode;
-    });
+    } else {
+      this.getUIContext().animateTo({ duration: LAYOUT_SWITCH_MS, curve: Curve.EaseInOut }, () => {
+        this.layoutMode = mode;
+      });
+    }
+    this.layoutBusyUntil = Date.now() + LAYOUT_SWITCH_MS;
     this.persistSettings();
   }
 

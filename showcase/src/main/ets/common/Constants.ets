@@ -84,9 +84,12 @@ export const CAROUSEL_FLING_MIN_DX: number = 28;
 export const CORRIDOR_CARD_H: number = 124;
 /** 透视长廊：卡片侧面的厚度（vp），画在背离中线的那一侧 */
 export const CORRIDOR_SIDE_W: number = 12;
-/** 透视长廊（横屏）：横向推进时每张卡的统一宽度（vp）。
- *  横向焦点按「第几列」算，宽度必须固定，否则焦点会飘 */
-export const CORRIDOR_ACROSS_W: number = 148;
+/** 透视长廊（横屏）：横向推进时每张卡的统一宽度 = 画布高 × 这个比例。
+ *  横向焦点按「第几列」算，宽度必须固定，否则焦点会飘。
+ *  取 0.33：手机横屏画布高约 440vp → 145vp，与竖屏那套「按画布推出 5~6 层」同一路数
+ *  （原先写死 148vp，平板画布高到 1100vp 以上时，卡片只剩画布高的 14%，
+ *  变成顶在屏幕上沿的一条细带）。 */
+export const CORRIDOR_ACROSS_W_RATIO: number = 0.33;
 /** 透视长廊：行间距（vp）。滚动位置换算焦点行时要用它 */
 export const CORRIDOR_GAP: number = 6;
 /** 透视长廊：卡片贴墙时留给屏幕边缘的宽度（vp）。
@@ -120,6 +123,23 @@ export const CORRIDOR_TAPER: number = 0.25;
 export const CORRIDOR_LIFT: number = 6;
 /** 透视长廊：纵向收缩的层数上限，超过就不再拉，避免远处的项叠成一坨 */
 export const CORRIDOR_LIFT_MAX_D: number = 4;
+
+// ---------- 时间轴（④ 画廊排布）----------
+// 卡片宽度不写死、只设上限：窄屏按栏宽铺满（沿用竖屏观感），宽屏收到 300vp 并整体居中，
+// 行高由卡宽 × 比例推出。原先行高写死 112vp、卡片用 aspectRatio 撑，横屏栏宽 809vp 时
+// 卡片被算成 622vp 高，溢出 510vp 压住日期头与轴线。
+/** 单侧卡片最大宽度 */
+export const TIMELINE_CARD_MAX_W: number = 300;
+/** 卡片宽高比（宽 : 高） */
+export const TIMELINE_CARD_RATIO: number = 1.3;
+/** 中间轴线列宽 */
+export const TIMELINE_AXIS_W: number = 26;
+/** 列表左右内边距 */
+export const TIMELINE_PAD: number = 12;
+/** 行间距 */
+export const TIMELINE_GAP: number = 10;
+/** 日期头行高 */
+export const TIMELINE_HEADER_H: number = 40;
 
 // ---------- 内容切换过渡（纯计算，多个视图共用）----------
 // 阶段约定：0 稳定，1 旧内容左右退场，2 新内容自下而上补位
@@ -171,7 +191,22 @@ export function phaseOpacity(phase: number): number {
   return phase === 0 ? 1 : 0;
 }
 
+// 内容切换的四个时间量。切类型（展品/图片/视频/组合）时的编排在 Index 里按它们排拍子，
+// 而「这段时间算不算还在过渡」必须和动画时长同源：两边一旦漂移，就会出现
+// 「动画还在播、状态却以为已经稳定」，连点时会一次次重播退场，补位永远播不完。
+/** 退场动画时长 */
+export const PHASE_EXIT_MS: number = 110;
+/** 补位动画时长 */
+export const PHASE_ENTER_MS: number = 240;
+/** 退场拍的实际等待：略长于退场动画，保证位移先走完再换数据 */
+export const PHASE_EXIT_WAIT_MS: number = 120;
+/** 换数据到起补位之间的间隔：先让新内容落到下方，再放它上来 */
+export const PHASE_SWAP_GAP_MS: number = 16;
+
+/** 排布切换的动画时长。视图里新内容入场用的 260ms 淡入包在其中（280 > 260） */
+export const LAYOUT_SWITCH_MS: number = 280;
+
 /** 退场用短时长，补位用长时长（阶段切到 0 时读到的是补位时长） */
 export function phaseAnimDuration(phase: number): number {
-  return phase === 1 ? 110 : 240;
+  return phase === 1 ? PHASE_EXIT_MS : PHASE_ENTER_MS;
 }

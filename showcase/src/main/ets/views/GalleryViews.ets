@@ -22,7 +22,7 @@ import {
   CAROUSEL_FLING_MIN_DX,
   CORRIDOR_CARD_H,
   CORRIDOR_SIDE_W,
-  CORRIDOR_ACROSS_W,
+  CORRIDOR_ACROSS_W_RATIO,
   CORRIDOR_GAP,
   CORRIDOR_WALL,
   CORRIDOR_COLLAPSE,
@@ -33,6 +33,12 @@ import {
   CORRIDOR_TAPER,
   CORRIDOR_LIFT,
   CORRIDOR_LIFT_MAX_D,
+  TIMELINE_CARD_MAX_W,
+  TIMELINE_CARD_RATIO,
+  TIMELINE_AXIS_W,
+  TIMELINE_PAD,
+  TIMELINE_GAP,
+  TIMELINE_HEADER_H,
   exitShiftX,
   enterShiftY,
   phaseOpacity,
@@ -80,6 +86,8 @@ export struct GalleryViews {
   private corridorRows: PairDataSource = new PairDataSource();
   /** 旋转展台：基准索引，单向 —— 只由 Swiper 的 onChange 写入，绝不回写 Swiper */
   @State carouselIndex: number = 0;
+  /** 时间轴列表实测宽度：卡宽/行高都由它推，宽屏下据此收成居中窄栏 */
+  @State timelineW: number = 0;
   /** 旋转展台：手指是否正按在展台上拖动。由 onTouch 直接驱动，
    *  只在按下/抬起各变一次，拖动全程不再变化 */
   @State carouselDragging: boolean = false;
@@ -234,6 +242,9 @@ export struct GalleryViews {
       .listDirection(Axis.Horizontal)
       .width('100%')
       .height('100%')
+      // 卡片在纵向上居中：走廊的墙在上下，卡带该落在画面中间，
+      // 默认的顶端对齐会让它贴着状态栏、下面空一整屏
+      .alignListItem(ListItemAlign.Center)
       .padding({ left: CORRIDOR_WALL, right: CORRIDOR_WALL })
       .scrollBar(BarState.Off)
       .onScrollFrameBegin((offset: number, _state: ScrollState): OnScrollFrameBeginHandlerResult => {
@@ -275,14 +286,28 @@ export struct GalleryViews {
     .transition(TransitionEffect.OPACITY.animation({ duration: 260, curve: Curve.EaseInOut }))
   }
 
-  /** 横向滚动的焦点：屏幕正中落在第几列 */
+  /**
+   * 横屏长廊的单张卡宽 = 画布高 × 比例。
+   * 竖屏那套的「一屏五六层」是按画布推出来的（124 + 6 = 130，780/130 ≈ 6 行），
+   * 横屏原先把宽度写死 148vp，平板画布高一倍多也不跟着变，卡片只剩画布高的 14%，
+   * 变成顶在屏幕上沿的一条细带。改成按画布高度取比例后，手机横屏仍是原来的观感，
+   * 平板则自动放大到该有的体量。
+   */
+  corridorAcrossW(): number {
+    if (!(this.corridorH > 0)) {
+      return 0;
+    }
+    return this.corridorH * CORRIDOR_ACROSS_W_RATIO;
+  }
+
+  /** 横向滚动的焦点：屏幕正中落在第几列。列宽必须与实际卡宽同源 */
   syncCorridorFocusAcross(): void {
     if (this.corridorW <= 0) {
       return;
     }
     const x: number = this.corridorScroller.currentOffset().xOffset;
     const contentX: number = x + this.corridorW / 2 - CORRIDOR_WALL;
-    this.corridorFocus = contentX / (CORRIDOR_ACROSS_W + CORRIDOR_GAP);
+    this.corridorFocus = contentX / (this.corridorAcrossW() + CORRIDOR_GAP);
   }
 
   /** 横向长廊的一张卡：宽度统一，高度按图片比例浮动（钳制） */
@@ -291,8 +316,8 @@ export struct GalleryViews {
     Stack({ alignContent: Alignment.Center }) {
       mediaFill(item);
     }
-    .width(CORRIDOR_ACROSS_W)
-    .height(CORRIDOR_ACROSS_W / this.corridorRatio(item))
+    .width(this.corridorAcrossW())
+    .height(this.corridorAcrossW() / this.corridorRatio(item))
     .borderRadius(12)
     .clip(true)
     .shadow({
@@ -997,9 +1022,23 @@ export struct GalleryViews {
 
   // ---------- ④ 时间轴：竖直轴线，照片左右交错 ----------
 
+  /** 单侧卡宽：窄屏按栏宽铺满，宽屏收到 TIMELINE_CARD_MAX_W —— 整条时间轴随之居中成窄栏 */
+  timelineCardW(): number {
+    if (!(this.timelineW > 0)) {
+      return 0;
+    }
+    const half: number = (this.timelineW - TIMELINE_PAD * 2 - TIMELINE_AXIS_W) / 2;
+    return half > TIMELINE_CARD_MAX_W ? TIMELINE_CARD_MAX_W : half;
+  }
+
+  /** 卡片与行高：同一个值，卡片不再溢出到自己那一行之外 */
+  timelineCardH(): number {
+    return this.timelineCardW() / TIMELINE_CARD_RATIO;
+  }
+
   @Builder
   timelineLayout() {
-    List({ space: 10 }) {
+    List({ space: TIMELINE_GAP }) {
       ForEach(this.timeline, (entry: TimelineEntry, i: number) => {
         ListItem() {
           this.timelineRow(entry);
@@ -1013,13 +1052,19 @@ export struct GalleryViews {
     }
     .width('100%')
     .height('100%')
-    .padding({ left: 12, right: 12, bottom: this.contentPad })
+    .padding({ left: TIMELINE_PAD, right: TIMELINE_PAD, bottom: this.contentPad })
     .scrollBar(BarState.Off)
     .onScrollIndex((first: number) => {
       this.onScroll(first);
     })
     .contentStartOffset(this.headerHeight)
     .transition(TransitionEffect.OPACITY.animation({ duration: 260, curve: Curve.EaseInOut }))
+    .onAreaChange((oldArea: Area, newArea: Area) => {
+      const w = newArea.width;
+      if (typeof w === 'number' && w > 0) {
+        this.timelineW = w;
+      }
+    })
   }
 
   @Builder
@@ -1043,7 +1088,7 @@ export struct GalleryViews {
         .borderRadius(12)
     }
     .width('100%')
-    .height(40)
+    .height(TIMELINE_HEADER_H)
     .justifyContent(FlexAlign.Center)
   }
 
@@ -1055,8 +1100,8 @@ export struct GalleryViews {
           this.timelineCard(index);
         }
       }
-      .layoutWeight(1)
-      .height('100%')
+      .width(this.timelineCardW())
+      .height(this.timelineCardH())
 
       // 轴线
       Column() {
@@ -1065,8 +1110,8 @@ export struct GalleryViews {
           .height('100%')
           .backgroundColor($r('app.color.c_axis'))
       }
-      .width(26)
-      .height('100%')
+      .width(TIMELINE_AXIS_W)
+      .height(this.timelineCardH())
       .alignItems(HorizontalAlign.Center)
 
       Stack() {
@@ -1074,11 +1119,14 @@ export struct GalleryViews {
           this.timelineCard(index);
         }
       }
-      .layoutWeight(1)
-      .height('100%')
+      .width(this.timelineCardW())
+      .height(this.timelineCardH())
     }
     .width('100%')
-    .height(112)
+    .height(this.timelineCardH())
+    // 窄屏下两侧卡宽正好等于栏宽，居中无副作用；宽屏下两侧已被收到上限，
+    // 靠居中把整条时间轴收成屏幕正中的一条窄栏，而不是贴着左边
+    .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
   }
 
@@ -1090,7 +1138,9 @@ export struct GalleryViews {
         mediaFill(this.items[index]);
       }
       .width('100%')
-      .aspectRatio(1.3)
+      // 高度由父级给死（= 卡宽 / 比例）。原来这里是 aspectRatio(1.3)：宽度由父级撑到栏宽后
+      // 高度就跟着算成 622vp，行高却只有 112vp，卡片直接溢出去压住日期头
+      .height('100%')
       .borderRadius(12)
       .clip(true)
       .shadow({ radius: 16, color: $r('app.color.c_shadow'), offsetX: 0, offsetY: 8 })

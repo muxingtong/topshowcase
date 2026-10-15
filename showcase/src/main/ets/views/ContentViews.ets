@@ -422,11 +422,18 @@ export struct ContentViews {
   }
 
   @Builder
+  /**
+   * 展柜主图：按原比例完整显示（Contain），但**顶部对齐**。
+   *
+   * 卡片是整屏高的框，照片是宽幅时居中会同时在上、下留出卡片底色 —— 深色主题下
+   * 那两块就是黑带，上面那块尤其像"顶了个黑边框"。改成顶对齐后留白只落在下方，
+   * 而下方正好是信息行与缩略图条所在的位置，读起来就是展柜下方的标签区。
+   */
   mediaFillContain(item: MediaItem) {
     if (item.type === MediaType.VIDEO) {
       if (item.thumbUri.length > 0) {
         Image(item.thumbUri)
-          .objectFit(ImageFit.Contain)
+          .objectFit(ImageFit.TOP)
           .width('100%')
           .height('100%')
       } else {
@@ -437,7 +444,7 @@ export struct ContentViews {
       }
     } else {
       Image(item.uri)
-        .objectFit(ImageFit.Contain)
+        .objectFit(ImageFit.TOP)
         .width('100%')
         .height('100%')
     }
