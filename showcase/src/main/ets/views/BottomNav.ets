@@ -114,7 +114,7 @@ export struct BottomNav {
 
   @Builder
   navRow() {
-    Row({ space: this.isLandscape ? NAV_GAP + 12 : NAV_GAP }) {
+    Row({ space: this.navGap() }) {
       // 背板材质由对应的 HdsTabs 提供，此处只放内容
       // 点击循环切换；长按弹出全部排布菜单（上滑会与中胶囊拖动、列表滚动抢手势，故只用长按）
       Text(this.layoutName())
@@ -164,7 +164,7 @@ export struct BottomNav {
       })
     }
     .width('100%')
-    .padding({ left: 16 + this.safeSide, right: 16 + this.safeSide, bottom: this.navBottomMargin() })
+    .padding({ left: this.navSidePad(), right: this.navSidePad(), bottom: this.navBottomMargin() })
     // 居中：竖屏下三块本来就撑满屏宽，居中无副作用；横屏下屏宽翻倍，
     // 若仍两端对齐，左右胶囊会被甩到屏幕两头，中间空出一大片
     .justifyContent(FlexAlign.Center)
@@ -278,16 +278,31 @@ export struct BottomNav {
   }
 
   // 左右胶囊材质背板的水平偏移
-  // 自绘层：左右各 padding 16、胶囊宽 NAV_SIDE、间隙 NAV_GAP
+  // 自绘层铺满屏宽：左右各留 navSidePad()、胶囊宽 NAV_SIDE、两处间隙 navGap()
   // HdsTabs 铺满屏幕且页签栏水平居中，需平移后与自绘胶囊同心
+  // 这里推出来的屏宽必须与 navRow() 的实际布局逐项一致：横屏加宽的间隙、侧边留白
+  // 都要算进去。少算任何一项，左右材质就会整体向内偏半个差值，表现为
+  // 「网格」贴着胶囊左侧、「＋」贴着胶囊右侧 —— 两块材质各偏一半，看着就是错位
   sideBackingOffset(left: boolean): number {
     const w: number = this.filterTrackW;
     if (!(w > 0)) {
       return 0;
     }
-    const screenW: number = w + NAV_SIDE * 2 + NAV_GAP * 2 + 32;
-    const centerFromEdge: number = 16 + NAV_SIDE / 2;
+    const pad: number = this.navSidePad();
+    const gap: number = this.navGap();
+    const screenW: number = w + NAV_SIDE * 2 + gap * 2 + pad * 2;
+    const centerFromEdge: number = pad + NAV_SIDE / 2;
     return left ? (centerFromEdge - screenW / 2) : (screenW / 2 - centerFromEdge);
+  }
+
+  /** 胶囊之间的间隙：横屏屏更宽，中间要让开更多 */
+  navGap(): number {
+    return this.isLandscape ? NAV_GAP + 12 : NAV_GAP;
+  }
+
+  /** 导航左右外留白：竖屏 16，横屏还要额外避开侧边刘海 */
+  navSidePad(): number {
+    return 16 + this.safeSide;
   }
 
   // 中胶囊宽度（页签栏材质背板宽度，需与自绘内容层严格一致）
